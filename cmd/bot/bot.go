@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/Back1ng/bot/internal/service/product"
+	"github.com/Back1ng/test-tgbot-with-commands/internal/app/commands"
+	"github.com/Back1ng/test-tgbot-with-commands/internal/service/product"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
@@ -24,6 +25,8 @@ func main() {
 
 	productService := product.NewService()
 
+	commander := commands.NewCommander(bot, productService)
+
 	for update := range updates {
 		if update.Message == nil {
 			continue
@@ -31,37 +34,11 @@ func main() {
 
 		switch update.Message.Command() {
 		case "help":
-			helpCommand(bot, update.Message)
+			commander.Help(update.Message)
 		case "list":
-			listCommand(bot, update.Message, productService)
+			commander.List(update.Message)
 		default:
-			defaultBehavior(bot, update.Message)
+			commander.Default(update.Message)
 		}
 	}
-}
-
-func helpCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
-	msg := tgbotapi.NewMessage(message.Chat.ID, "/help - help")
-
-	bot.Send(msg)
-}
-
-func listCommand(bot *tgbotapi.BotAPI, message *tgbotapi.Message, productService *product.Service) {
-	outputMsgText := "Here all the products: \n\n"
-
-	products := productService.List()
-	for _, p := range products {
-		outputMsgText += p.Title
-		outputMsgText += "\n"
-	}
-
-	msg := tgbotapi.NewMessage(message.Chat.ID, outputMsgText)
-
-	bot.Send(msg)
-}
-
-func defaultBehavior(bot *tgbotapi.BotAPI, message *tgbotapi.Message) {
-	msg := tgbotapi.NewMessage(message.Chat.ID, message.Text)
-
-	bot.Send(msg)
 }
